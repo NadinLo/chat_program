@@ -1,9 +1,9 @@
 package com.company;
 
 public class User {
-    String username;
+    private String username;
 
-    private User (String username){
+    public User (String username){
         this.username = username;
     }
 
@@ -14,4 +14,6 @@ public class User {
     public void setUsername(String username) {
         this.username = username;
     }
+
+
 }
