@@ -1,6 +1,8 @@
 package com.company;
 
+import javax.xml.stream.events.EntityReference;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
@@ -8,19 +10,23 @@ public class Main {
     public static void main(String[] args) {
         Connection conn = null;
         Scanner scanner = new Scanner(System.in);
+        ArrayList<String> contacts = new ArrayList<>();
+
         try {
             String url = "jdbc:mysql://localhost:3306/chat_program?user=root";
             conn = DriverManager.getConnection(url);
             System.out.println("connected");
             Statement stmt;
             String command;
+            String query = "";
             User user;
             String name = "";
-
+            int userID = 0;
+/*
             //register as a new user in DB.
             //login as a user in program
             int successful = 0;
-  /*          while (successful != 1) {
+            while (successful != 1) {
                 name = scanner.nextLine();
                 command = "INSERT INTO `user`(`user_name`) VALUES ('" + name + "')";
                 try {
@@ -31,6 +37,8 @@ public class Main {
                 }
             }
             user = new User(name);
+            userID = getUserID(conn, name, userID);
+            user.setUser_id(userID);
 
 
    */
@@ -39,7 +47,6 @@ public class Main {
             user = null;
             name = null;
             command = "";
-            String query = "";
             stmt = null;
             String login;
 
@@ -59,13 +66,32 @@ public class Main {
                 }
             }
             user = new User(name);
+
+            userID = getUserID(conn, name, userID);
+            user.setUser_id(userID);
             System.out.println("you are now logged in as: " + user.getUsername());
 
-            //todo: create directory
+            // create contactList
+            //todo: add new contact to List
+            query = "SELECT user.id, user.user_name FROM `contacts` Inner JOIN user ON contacts.contact_id = user.id WHERE user_id = "
+                    + user.getUser_id();
+            try {
+                stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                while (rs.next()) {
+                    contacts.add(name = rs.getString("user.user_name"));
+                }
+            } catch (SQLException ex){
+                throw new Error("Problem", ex);
+            }
 
-            //todo: send message to other user from your directory
+            //todo: send message to other user from your contactList
             //todo: receive messages
+
+
+
         } catch (SQLException ex){
+
             throw new Error("Problem", ex);
         } finally {
             try {
@@ -78,5 +104,21 @@ public class Main {
         }
 
 
+    }
+
+    private static int getUserID(Connection conn, String name, int userID) {
+        String query;
+        Statement stmt;
+        query = "SELECT `id` FROM `user` WHERE `user_name` = '" + name + "'";
+        try {
+            stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()){
+                userID = rs.getInt("id");
+            }
+        } catch (SQLException ex){
+            throw new Error("Problem", ex);
+        }
+        return userID;
     }
 }
