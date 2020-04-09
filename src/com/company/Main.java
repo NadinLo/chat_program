@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
         Connection conn = null;
         Scanner scanner = new Scanner(System.in);
-        ArrayList<String> contacts = new ArrayList<>();
+        ArrayList<User> contacts = new ArrayList<>();
 
         try {
             String url = "jdbc:mysql://localhost:3306/chat_program?user=root";
@@ -50,7 +50,8 @@ public class Main {
             stmt = null;
             String login;
 
-            while(name == null) {
+            while (name == null) {
+                System.out.println("Please, enter your name.");
                 login = scanner.nextLine();
                 query = "SELECT `user_name` FROM `user` WHERE `user_name` = '" + login + "'";
                 try {
@@ -61,7 +62,7 @@ public class Main {
                     } else {
                         System.out.println("This user name does not exist. Please try again.");
                     }
-                } catch (SQLException ex){
+                } catch (SQLException ex) {
                     System.out.println("Problem");
                 }
             }
@@ -78,14 +79,19 @@ public class Main {
                 stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(query);
                 while (rs.next()) {
-                    contacts.add(name = rs.getString("user.user_name"));
+                    User contact = new User(name = rs.getString("user.user_name"));
+                    userID = getUserID(conn, name, userID);
+                    contact.setUser_id(userID);
+                    contacts.add(contact);
                 }
-            } catch (SQLException ex){
+            } catch (SQLException ex) {
                 throw new Error("Problem", ex);
             }
-
+            System.out.println("Your contact list is updated.");
+/*
             //add new contact to List
             successful = 0;
+            System.out.println("Pleas enter the name of the contact you want to add to your list.");
             while (successful != 1) {
                 name = scanner.nextLine();
                 command = "INSERT INTO `contacts` (`user_id`,`contact_id`) VALUES( " +
@@ -98,14 +104,68 @@ public class Main {
                     System.out.println("The chosen name does not exist. Please try again.");
                 }
             }
-            contacts.add(name);
+            User contact = new User(name);
+            userID = getUserID(conn, name, userID);
+            contact.setUser_id(userID);
+            contacts.add(contact);
 
+            System.out.println("The contact " + name + "was added to your list.");
+
+
+ */
             //todo: send message to other user from your contactList
-            //todo: receive messages
+            String sender = "";
+            System.out.println("Choose a partner for your conversation from your list");
+            for (User contact : contacts) {
+                System.out.print(contact.getUsername() + ", ");
+            }
+            System.out.println("");
+            successful = 0;
+            while (successful != 1) {
+                name = scanner.nextLine();
+                for (User contact : contacts) {
+                    if (contact.getUsername().equalsIgnoreCase(name)) {
+                        successful = 1;
+                        System.out.println("previous conversation with " + name + ":");
+                        query = "SELECT * FROM `chat` WHERE " +
+                                "(`sender_id` = " + user.getUser_id() + " OR `sender_id` = " + contact.getUser_id() +
+                                ") AND " +
+                                "(`receiver_id` = " + user.getUser_id() + " OR `receiver_id` = " + contact.getUser_id() + ")" +
+                                "AND sended_time > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -2 MONTH)" +
+                                "LIMIT 20";
+                        ResultSet rs = stmt.executeQuery(query);
+                        while (rs.next()) {
+                            String time = rs.getTimestamp("sended_time").toString();
+                            int sender_id = rs.getInt("sender_id");
+                            if (sender_id == user.getUser_id()) {
+                                sender = "me";
+                            }
+                            if (sender_id == contact.getUser_id()) {
+                                sender = contact.getUsername();
+                            }
+                            String text = rs.getString("text");
+                            System.out.println(time + "\tfrom " + sender + "\n" + text);
+                        }
+                        System.out.println("\n\nwrite your message.");
+                        String text = scanner.nextLine();
+                        command = "INSERT INTO `chat`(`sender_id`, `receiver_id`, `text`) " +
+                                "VALUES (" + user.getUser_id() + "," + contact.getUser_id() + ", '" + text + "')";
+                        stmt = conn.createStatement();
+                        stmt.executeUpdate(command);
+                    }
+
+
+                }
+
+                //todo: receive messages
+                if (successful != 1) {
+                    System.out.println("This name is not in your contact list. Try again.");
+                }
 
 
 
-        } catch (SQLException ex){
+            }
+        } catch (SQLException ex) {
 
             throw new Error("Problem", ex);
         } finally {
@@ -128,10 +188,10 @@ public class Main {
         try {
             stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(query);
-            while (rs.next()){
+            while (rs.next()) {
                 userID = rs.getInt("id");
             }
-        } catch (SQLException ex){
+        } catch (SQLException ex) {
             throw new Error("Problem", ex);
         }
         return userID;
