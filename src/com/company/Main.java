@@ -1,6 +1,5 @@
 package com.company;
 
-import javax.xml.stream.events.EntityReference;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -18,7 +17,7 @@ public class Main {
             System.out.println("connected");
             Statement stmt;
             String command;
-            String query = "";
+            String query;
             User user;
             String name = "";
             int userID = 0;
@@ -26,7 +25,7 @@ public class Main {
             //register as a new user in DB.
             //login as a user in program
             int successful = 0;
-/*            while (successful != 1) {
+           while (successful != 1) {
                 name = scanner.nextLine();
                 command = "INSERT INTO `user`(`user_name`) VALUES ('" + name + "')";
                 try {
@@ -40,14 +39,9 @@ public class Main {
             userID = getUserID(conn, name, userID);
             user.setUser_id(userID);
 
-
-   */
             //login as user
             //todo: add passwordOption
-            user = null;
             name = null;
-            command = "";
-            stmt = null;
             String login;
 
             while (name == null) {
@@ -88,7 +82,7 @@ public class Main {
                 throw new Error("Problem", ex);
             }
             System.out.println("Your contact list is updated.");
-/*
+
             //add new contact to List
             successful = 0;
             System.out.println("Pleas enter the name of the contact you want to add to your list.");
@@ -111,26 +105,27 @@ public class Main {
 
             System.out.println("The contact " + name + "was added to your list.");
 
-
- */
-            //todo: send message to other user from your contactList
-            String sender = "";
+            //send message to other user from your contactList
+            String sender = null;
             System.out.println("Choose a partner for your conversation from your list");
-            for (User contact : contacts) {
-                System.out.print(contact.getUsername() + ", ");
+            for (User chatPartner : contacts) {
+                //print all contacts
+                System.out.print(chatPartner.getUsername() + ", ");
             }
-            System.out.println("");
+            System.out.println();
             successful = 0;
-            while (successful != 1) {
+            while (successful != 1) {  //if name is not spelled right
+                //choose contact
                 name = scanner.nextLine();
-                for (User contact : contacts) {
-                    if (contact.getUsername().equalsIgnoreCase(name)) {
+                for (User chatPartner : contacts) {
+                    if (chatPartner.getUsername().equalsIgnoreCase(name)) {
                         successful = 1;
                         System.out.println("previous conversation with " + name + ":");
+                        //print conversation of the last 2 Months and the last 20 entries
                         query = "SELECT * FROM `chat` WHERE " +
-                                "(`sender_id` = " + user.getUser_id() + " OR `sender_id` = " + contact.getUser_id() +
+                                "(`sender_id` = " + user.getUser_id() + " OR `sender_id` = " + chatPartner.getUser_id() +
                                 ") AND " +
-                                "(`receiver_id` = " + user.getUser_id() + " OR `receiver_id` = " + contact.getUser_id() + ")" +
+                                "(`receiver_id` = " + user.getUser_id() + " OR `receiver_id` = " + chatPartner.getUser_id() + ")" +
                                 "AND sended_time > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -2 MONTH)" +
                                 "LIMIT 20";
                         ResultSet rs = stmt.executeQuery(query);
@@ -140,30 +135,46 @@ public class Main {
                             if (sender_id == user.getUser_id()) {
                                 sender = "me";
                             }
-                            if (sender_id == contact.getUser_id()) {
-                                sender = contact.getUsername();
+                            if (sender_id == chatPartner.getUser_id()) {
+                                sender = chatPartner.getUsername();
                             }
                             String text = rs.getString("text");
                             System.out.println(time + "\tfrom " + sender + "\n" + text);
                         }
+                        //write message:
                         System.out.println("\n\nwrite your message.");
                         String text = scanner.nextLine();
                         command = "INSERT INTO `chat`(`sender_id`, `receiver_id`, `text`) " +
-                                "VALUES (" + user.getUser_id() + "," + contact.getUser_id() + ", '" + text + "')";
+                                "VALUES (" + user.getUser_id() + "," + chatPartner.getUser_id() + ", '" + text + "')";
                         stmt = conn.createStatement();
                         stmt.executeUpdate(command);
+                        System.out.println("previous conversation with " + name + ":");
+                        //print conversation of the last 2 Months and the last 20 entries
+                        query = "SELECT * FROM `chat` WHERE " +
+                                "(`sender_id` = " + user.getUser_id() + " OR `sender_id` = " + chatPartner.getUser_id() +
+                                ") AND " +
+                                "(`receiver_id` = " + user.getUser_id() + " OR `receiver_id` = " + chatPartner.getUser_id() + ")" +
+                                "AND sended_time > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -2 MONTH)" +
+                                "LIMIT 20";
+                        rs = stmt.executeQuery(query);
+                        while (rs.next()) {
+                            String time = rs.getTimestamp("sended_time").toString();
+                            int sender_id = rs.getInt("sender_id");
+                            if (sender_id == user.getUser_id()) {
+                                sender = "me";
+                            }
+                            if (sender_id == chatPartner.getUser_id()) {
+                                sender = chatPartner.getUsername();
+                            }
+                            text = rs.getString("text");
+                            System.out.println(time + "\tfrom " + sender + "\n" + text);
+                        }
                     }
-
-
                 }
-
-                //todo: receive messages
+                //todo: receive messages resp. update the chat history every xxx Seconds (return from printing conversation on)
                 if (successful != 1) {
                     System.out.println("This name is not in your contact list. Try again.");
                 }
-
-
-
             }
         } catch (SQLException ex) {
 
