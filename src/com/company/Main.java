@@ -22,11 +22,11 @@ public class Main {
             User user;
             String name = "";
             int userID = 0;
-/*
+
             //register as a new user in DB.
             //login as a user in program
             int successful = 0;
-            while (successful != 1) {
+/*            while (successful != 1) {
                 name = scanner.nextLine();
                 command = "INSERT INTO `user`(`user_name`) VALUES ('" + name + "')";
                 try {
@@ -72,7 +72,6 @@ public class Main {
             System.out.println("you are now logged in as: " + user.getUsername());
 
             // create contactList
-            //todo: add new contact to List
             query = "SELECT user.id, user.user_name FROM `contacts` Inner JOIN user ON contacts.contact_id = user.id WHERE user_id = "
                     + user.getUser_id();
             try {
@@ -84,6 +83,22 @@ public class Main {
             } catch (SQLException ex){
                 throw new Error("Problem", ex);
             }
+
+            //add new contact to List
+            successful = 0;
+            while (successful != 1) {
+                name = scanner.nextLine();
+                command = "INSERT INTO `contacts` (`user_id`,`contact_id`) VALUES( " +
+                        "(SELECT user.id FROM user WHERE user.user_name = '" + user.getUsername() + "'), " +
+                        "(SELECT user.id FROM user WHERE user.user_name = '" + name + "'))";
+                try {
+                    stmt = conn.createStatement();
+                    successful = stmt.executeUpdate(command);
+                } catch (SQLException ex){
+                    System.out.println("The chosen name does not exist. Please try again.");
+                }
+            }
+            contacts.add(name);
 
             //todo: send message to other user from your contactList
             //todo: receive messages
